@@ -18,6 +18,9 @@ typedef struct __vint_t__ {
 /* Allocate a 64-bit integer */
 ce_uint64_t *u64_alloc(void* (*_alloc)(size_t));
 
+/* Allocate a 64-bit integer using c malloc */
+#define u64_malloc() u64_alloc(malloc)
+
 /* Set a 64-bit integer to zero */
 ce_uint64_t *u64_zero(ce_uint64_t *A);
 
