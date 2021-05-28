@@ -391,22 +391,24 @@ u64_ito64:
 ;ce_uint64_t *u64_mul(ce_uint64_t *A, ce_uint64_t *B);
 ;output A = A * B
 u64_mul:
-	ld hl,-19
+	ld hl,-20
 	call ti._frameset
 	push iy
-	lea hl,ix-16
+	lea hl,ix-17
 	ld b,16
 	xor a,a
 .zeroloop:
 	ld (hl),a
 	inc hl
 	djnz .zeroloop
-	lea iy,ix-16
-	ld a,8
-	ld (ix-17),a
-.outer_loop:
+	ld hl,(ix+6)
+	push hl
+	lea iy,ix-17
 	ld a,8
 	ld (ix-18),a
+.outer_loop:
+	ld a,8
+	ld (ix-19),a
 	or a,a
 	sbc hl,hl
 	push hl
@@ -415,7 +417,7 @@ u64_mul:
 	ld a,(bc)
 	inc bc
 	ld (ix+6),bc
-	ld (ix-19),a
+	ld (ix-20),a
 .inner_loop:
 	ld h,0
 	ld l,(iy)
@@ -425,13 +427,13 @@ u64_mul:
 	inc bc
 	ld (ix+9),bc
 	ld c,a
-	ld b,(ix-19)
+	ld b,(ix-20)
 	mlt bc
 	add hl,bc
 	ld e,h
 	ld (iy),l
 	inc iy
-	dec (ix-18)
+	dec (ix-19)
 	jq nz,.inner_loop
 	ld (iy),e
 	lea iy,iy-7
@@ -439,11 +441,11 @@ u64_mul:
 	ld bc,-8
 	add hl,bc
 	ld (ix+9),hl
-	dec (ix-17)
+	dec (ix-18)
 	jq nz,.outer_loop
-	ld de,(ix+6)
-	lea hl,ix-16
-	ld bc,16
+	pop de
+	lea hl,ix-17
+	ld bc,8
 	push de
 	ldir
 	pop hl
