@@ -2,8 +2,10 @@
 #ifndef __INT64CE_H__
 #define __INT64CE_H__
 
-typedef void ce_uint64_t;
-typedef void ce_int64_t;
+typedef struct __uint64_t__ {
+	uint8_t r0, r1, r2, r3, r4, r5, r6, r7;
+}ce_uint64_t;
+typedef ce_int64_t ce_uint64_t;
 
 typedef struct __vint_t__ {
 	uint8_t len;
@@ -12,7 +14,7 @@ typedef struct __vint_t__ {
 #define varint_t vint_t
 
 /**
- * 64-bit arithmetic routines
+ * 64-bit signed/unsigned arithmetic routines
  **/
 
 /* Allocate a 64-bit integer */
@@ -24,20 +26,26 @@ ce_uint64_t *u64_alloc(void* (*_alloc)(size_t));
 /* Set a 64-bit integer to zero */
 ce_uint64_t *u64_zero(ce_uint64_t *A);
 
+/* Convert a 24-bit unsigned integer B, storing to 64-bit unsigned integer A */
+ce_uint64_t *u64_ito64(ce_uint64_t *A, unsigned int B);
+
+/* Convert a 24-bit signed integer B, storing to 64-bit signed integer A */
+ce_int64_t *i64_ito64(ce_int64_t *A, int B);
+
 /* Shift a 64-bit integer A by B bits left */
 ce_uint64_t *u64_shl(ce_uint64_t *A, uint8_t B);
 
 /* Shift a 64-bit integer A by B bits right */
 ce_uint64_t *u64_shr(ce_uint64_t *A, uint8_t B);
 
+/* Invert a 64-bit signed integer */
+ce_int64_t *i64_invert(void);
+
 /* Add a 64-bit integer A and B, storing to A */
 ce_uint64_t *u64_add(ce_uint64_t *A, ce_uint64_t *B);
 
 /* Add a 64-bit integer A and 24-bit integer B, storing to A */
 ce_uint64_t *u64_addi(ce_uint64_t *A, unsigned int B);
-
-/* Convert a 24-bit integer B, storing to 64-bit integer A */
-ce_uint64_t *u64_ito64(ce_uint64_t *A, unsigned int B);
 
 /* Multiply two 64-bit integers A and B, storing to A */
 ce_uint64_t *u64_mul(ce_uint64_t *A, ce_uint64_t *B);
@@ -58,7 +66,7 @@ ce_uint64_t *u64_copy(ce_uint64_t *dest, ce_uint64_t *src);
 char *u64_tohex(char *buf, ce_uint64_t *A);
 
 /**
- * variable-length integer arithmetic routines
+ * variable-length integer arithmetic routines (TBA)
  **/
 
 /* allocate a variable-length integer. Size in *bytes*, not bits.
