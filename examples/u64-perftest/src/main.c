@@ -5,7 +5,7 @@
 #include <tice.h>
 #include <bigintce.h>
 
-#define num_tests 32768
+#define num_tests 256
 
 const char hex_chars[16] = "0123456789ABCDEF";
 
@@ -22,23 +22,43 @@ void start_timer(void){
 int main(void){
 	ce_uint64_t *a;
 	ce_uint64_t *b;
+	ce_uint64_t *r;
+	ce_uint64_t *t;
 	unsigned int time;
 	char *sbuf;
 	if (!(a = malloc(8))) return 1;
 	if (!(b = malloc(8))) return 1;
+	if (!(r = malloc(8))) return 1;
+	if (!(t = malloc(8))) return 1;
 	if (!(sbuf = malloc(17))) return 1;
-	u64_ito64(a, 0x123457);
-	u64_copy(b, a);
+
+	u64_ito64(t, 0x123457);
+	u64_copy(b, t);
 
 	start_timer();
 	for (int i = 1; i<num_tests; i++) {
+		u64_copy(a, t);
 		u64_mul(a, b);
 	}
 	time = end_timer();
-	sprintf((void*)0xFB0000, "u64_mul took %i seconds, %i ms to run 32768 times.\n", time/32768, (time*1000)/32768);
-
+	sprintf((void*)0xFB0000, "u64_mul took %i seconds, %i ms to run 256 times.\n", time/32768, (time*1000)/32768);
 	u64_tohex(sbuf, a);
 	sprintf((void*)0xFB0000,"result: 0x%s\n", sbuf);
+
+	u64_ito64(t, 0x123457);
+	u64_ito64(b, 0x3);
+	start_timer();
+	for (int i = 1; i<num_tests; i++) {
+		u64_copy(a, t);
+		u64_div(a, b, r);
+	}
+	time = end_timer();
+	sprintf((void*)0xFB0000, "u64_div took %i seconds, %i ms to run 256 times.\n", time/32768, (time*1000)/32768);
+	u64_tohex(sbuf, a);
+	sprintf((void*)0xFB0000,"result: 0x%s\n", sbuf);
+	u64_tohex(sbuf, r);
+	sprintf((void*)0xFB0000,"remainder: 0x%s\n", sbuf);
+
 	return 0;
 }
 

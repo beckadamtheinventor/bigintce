@@ -5,7 +5,7 @@
 typedef struct __uint64_t__ {
 	uint8_t r0, r1, r2, r3, r4, r5, r6, r7;
 }ce_uint64_t;
-typedef ce_int64_t ce_uint64_t;
+#define ce_int64_t ce_uint64_t
 
 typedef struct __vint_t__ {
 	uint8_t len;
@@ -62,11 +62,15 @@ ce_uint64_t *u64_div(ce_uint64_t *A, ce_uint64_t *B, ce_uint64_t *R);
 /* Copy a 64-bit integer from src to dest. Returns pointer to dest */
 ce_uint64_t *u64_copy(ce_uint64_t *dest, ce_uint64_t *src);
 
+/* Raise C to E, returning remainder mod M. C = (C pow E) % M. 
+ * uses Right-to-Left binary fast modular exponentation */
+ce_uint64_t *u64_powmod(ce_uint64_t *C, ce_uint64_t *E, ce_uint64_t *M);
+
 /* Convert a 64-bit integer to a hex string. buf must be allocated at least 17 bytes. */
 char *u64_tohex(char *buf, ce_uint64_t *A);
 
 /**
- * variable-length integer arithmetic routines (TBA)
+ * variable-length integer arithmetic routines (TBA, NOT YET IMPLEMENTED)
  **/
 
 /* allocate a variable-length integer. Size in *bytes*, not bits.
@@ -107,8 +111,6 @@ vint_t *vint_copy(vint_t *dest, vint_t *src);
 /* Convert a variable-length integer to a hex string. buf must be allocated at least len(A)*2 + 1 bytes. */
 char *vint_tohex(char *buf, vint_t *A);
 
-
-/* NOT YET IMPLEMENTED */
 /* Divide a variable-length integer A by B, storing result to A and remainder to R */
 vint_t *vint_div(vint_t *A, vint_t *B, vint_t *R);
 

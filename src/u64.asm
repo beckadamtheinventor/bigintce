@@ -75,15 +75,17 @@ u64_shr:
 ;ce_uint64_t *u64_add(ce_uint64_t *A, ce_uint64_t *B);
 ;output pointer to A = A + B
 u64_add:
-	pop bc,hl,de
-	push de,hl,bc
-	push hl
+	pop bc,de
+	ex (sp),hl
+	push de,bc
+.entry:
+	push de
 	or a,a
 	ld b,8
 .add_loop:
 	ld a,(de)
 	adc a,(hl)
-	ld (hl),a
+	ld (de),a
 	inc hl
 	inc de
 	djnz .add_loop
@@ -96,6 +98,7 @@ u64_add:
 u64_addi:
 	pop bc,hl,de
 	push de,hl,bc
+.entry:
 	push hl
 	xor a,a
 	ld bc,(hl)
@@ -152,7 +155,7 @@ u64_ito64:
 ;ce_uint64_t *u64_mul(ce_uint64_t *A, ce_uint64_t *B);
 ;output A = A * B
 u64_mul:
-	ld hl,-20
+	ld hl,-23
 	call ti._frameset
 	push iy
 	lea hl,ix-17
@@ -163,7 +166,7 @@ u64_mul:
 	inc hl
 	djnz .zeroloop
 	ld hl,(ix+6)
-	push hl
+	ld (ix-23),hl
 	lea iy,ix-17
 	ld a,8
 	ld (ix-18),a
@@ -204,7 +207,7 @@ u64_mul:
 	ld (ix+9),hl
 	dec (ix-18)
 	jq nz,.outer_loop
-	pop de
+	ld de,(ix-23)
 	lea hl,ix-17
 	ld bc,8
 	push de
@@ -217,33 +220,12 @@ u64_mul:
 
 
 ;-----------------------------------
-; Division algorithm used:
-;  if B == 0:
-;    return -1, R = 0
-;  if B == 1:
-;    return A, R = 0
-;  if A == 0:
-;    return A = 0, R = 0
-;  if A == B:
-;    return A = 1, R = 0
-;  if B > A:
-;    return A = 0, R = A    ; remainder is set first
-;  if A&1 == 0 and B&1 == 0:
-;    C = 1
-;  while A&1 == 0 and B&1 == 0:
-;    A /= 2; B /= 2; C *= 2
-;  if B:
-;    while A >= B:
-;      A -= B
-;  Example:
-;    11 / 9
-;    A = 11, B = 9
-;    A = 2, B = 8
+; Division algorithm is bytewise long division
 ;-----------------------------------
 ;ce_uint64_t *u64_div(ce_uint64_t *A, ce_uint64_t *B, ce_uint64_t *R);
-;returns A = A / B, *R = A % B
+;returns A = A / B, *R = A % B. Returns -1 if divide by zero.
 u64_div:
-	ld hl,-8
+	ld hl,-19
 	call ti._frameset
 	ld hl,(ix+9)
 	ld a,(hl)
@@ -254,7 +236,6 @@ u64_div:
 	inc hl
 	or a,(hl)
 	djnz .zerocheckloop
-	or a,a
 	jq z,.return_neg_1
 .not_zero:
 	dec a
@@ -264,7 +245,6 @@ u64_div:
 	inc hl
 	or a,(hl)
 	djnz .zerocheckloop2
-	or a,a
 	jq z,.return_arg0
 .not_one:
 	ld hl,(ix+12)
@@ -281,6 +261,7 @@ u64_div:
 	or a,(hl)
 	inc hl
 	djnz .zerocheckloop3
+	ld (ix-19),hl
 	ld b,8
 	or a,a
 	jq z,.zero_arg0_loop ;return A = 0, R = 0 if A = 0
@@ -288,58 +269,76 @@ u64_div:
 	ld de,(ix+6)
 	ld hl,(ix+9)
 	call u64_cmp.entry
-	jq z,.return_1 ;return 1 if A == B
+	jq z,.return_1 ;return A = 1 if A == B
 	inc a
 	jq z,.return_B_gt_A
 
-	lea hl,ix-8 ;set result counter to 1
-	ld (hl),1
+	lea hl,ix-16 ;set result counter and increment to 0
 	xor a,a
-	ld b,7
+	ld b,16
 .set_c_loop:
-	inc hl
 	ld (hl),a
+	inc hl
 	djnz .set_c_loop
 
-.shift_loop: ;shift divisor, dividend down and shift result counter up while divisor and dividend are even numbers
-	ld hl,(ix+6)
-	ld de,(ix+9)
-	bit 0,(hl)
-	ex hl,de
-	jq nz,.done_shifting
-	bit 0,(hl)
-	jq nz,.done_shifing
-	ld a,(hl)
-	ld b,7
-.check_zero_loop:
-	inc hl
-	or a,(hl)
-	djnz .check_zero_loop
-	jq z,.return_arg0
-	push de
-	ld c,1
-	call u64_shr.entry_c ;divisor /= 2
-	pop hl
-	inc c ;u64_shr always returns c = 0
-	call u64_shr.entry_c ;dividend /= 2
-	lea hl,ix-8
-	inc c
-	call u64_shl.entry_c ;result *= 2
-	jq .shift_loop
-.done_shifting:
-	ld de,(ix+6)
-	ld hl,(ix+9)
-	call u64_cmp.entry
-	jq z,.return_arg0
 	inc a
-	jq z,.return_B_gt_A
+	ld (ix+7-16),a ;set increment counter high byte to 0x01
+
+	ld b,8
+.divloop:
+	push bc
+	ld bc,7
+	ld hl,(ix+12) ;shift accumulator up (forward) a byte
+	add hl,bc
+	ex hl,de
+	ld hl,(ix+12)
+	add hl,bc
+	dec hl
+	lddr
+	ld hl,(ix-19) ;shift in next byte of A
+	dec hl
+	ld a,(hl)
+	ld (de),a
+	ld (ix-19),hl
+.subloop:
+	ld de,(ix+12) ;accumulator
+	ld hl,(ix+9) ;divisor
+	call u64_cmp.entry ;compare accumulator and divisor
+	inc a
+	jq z,.divloop_next ;accumulator < divisor, shift in another byte
+
+	lea hl,ix-16
+	lea de,ix-8
+	call u64_add.entry ;Add the increment to the result
+
+	ld de,(ix+12)
+	ld hl,(ix+9)
+	call u64_sub.entry ;Subtract the divisor from the accumulator
+	jq .subloop
+
+.divloop_next:
+	lea hl,ix-15 ;shift increment counter down (backward) a byte
+	lea de,ix-16
+	ld bc,7
+	ldir
+	xor a,a
+	ld (de),a
+	pop bc
+	djnz .divloop
+
+	lea hl,ix-8
+	ld de,(ix+6)
+	ld bc,8
+	ldir
+	jq .return_arg0
 	
-	
+
 .return_B_gt_A: ;if B > A
 	ld hl,(ix+6)
 	ld de,(ix+12)
 	ld bc,8
 	ldir
+	ld hl,(ix+6)
 	ld b,8
 	xor a,a
 	jq .zero_arg0_loop
@@ -422,12 +421,17 @@ u64_cmp:
 	ex (sp),hl
 	push de,bc
 .entry:
+	ld bc,8
+	add hl,bc
+	ex hl,de
+	add hl,bc
+	ex hl,de
 	ld b,8
 .loop:
+	dec hl
+	dec de
 	ld a,(de)
 	cp a,(hl)
-	inc hl
-	inc de
 	jq nz,.compare
 	djnz .loop
 	xor a,a
@@ -488,9 +492,112 @@ u64_tohex:
 	ret
 
 ;------------------------------------------------
-;!!!NOT YET IMPLEMENTED!!!
 ; ce_uint64_t *u64_powmod(ce_uint64_t *C, ce_uint64_t *E, ce_uint64_t *M);
 ; return C = (C pow E) % M
 u64_powmod:
+	scf
+	sbc hl,hl
+	ld (hl),2
+
+	ld hl,-16
+	call ti._frameset
+	ld hl,(ix+12)
+	ld c,(hl)
+	xor a,a
+	ld b,8
+.zero_check_loop:
+	inc hl
+	or a,(hl)
+	djnz .zero_check_loop
+	jq z,.m_is_not_zero
+	dec c
+	jq z,.return_A_0 ;return A = 0 if M = 1
+	inc c
+	jq z,.return_neg_1 ;return -1 if M = 0
+.m_is_not_zero:
+	lea hl,ix-8 ;set R = 1
+	ld (hl),1
+	ld b,7
+	xor a,a
+.zero_r_loop:
+	inc hl
+	ld (hl),a
+	djnz .zero_r_loop
+
+	pea ix-16 ;temp
+	ld hl,(ix+12) ;M
+	ld de,(ix+6) ;C
+	push hl,de
+	call u64_div ;temp = C % M
+	pop de,bc,hl
+	ld bc,8
+	ldir ;C = temp
+
+.outer_loop:
+	ld hl,(ix+9)
+	ld a,(hl)
+	ld b,7
+.check_E_zero_loop:
+	inc hl
+	or a,(hl)
+	djnz .check_E_zero_loop
+	jq z,.return_R
+	ld hl,(ix+9)
+	bit 0,(hl)
+	jq z,.no_mul_r_b
+	ld hl,(ix+6)
+	push hl
+	pea ix-8
+	call u64_mul ;R = R*C
+	pop bc,bc
+	pea ix-16
+	ld bc,(ix+12)
+	push bc
+	pea ix-8
+	call u64_div ;temp = R % M
+	pop de,bc,hl
+	ld bc,8
+	ldir ;R = temp
+.no_mul_r_b:
+	ld hl,(ix+9) ;E = E >> 1
+	ld c,1
+	call u64_shr.entry_c
+	ld hl,(ix+6)
+	push hl,hl
+	call u64_mul ;C = C * C
+	pop bc,bc
+	pea ix-16
+	ld bc,(ix+12)
+	push bc,hl
+	call u64_div ;temp = C % M
+	pop de,bc,hl
+	ld bc,8
+	ldir ;C = temp
+	jq .outer_loop
+.return_R:
+	lea hl,ix-8
+	ld de,(ix+6)
+	ld bc,8
+	ldir
+	jq .return_A
+.return_A_0:
+	ld hl,(ix+6)
+	ld (hl),0
+.set_A_zero_loop_entry:
+	ld b,7
+	xor a,a
+.set_A_zero_loop:
+	inc hl
+	ld (hl),a
+	djnz .set_A_zero_loop
+.return_A:
+	ld hl,(ix+6)
+	db $01
+.return_neg_1:
+	scf
+	sbc hl,hl
+.return_hl:
+	ld sp,ix
+	pop ix
 	ret
 

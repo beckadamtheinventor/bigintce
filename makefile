@@ -42,7 +42,7 @@ all: bigintce
 
 bigintce: bin/BIGINTCE.8xv
 
-bin/BIGINTCE.8xv: src/bigintce.asm
+bin/BIGINTCE.8xv: src/bigintce.asm src/u64.asm src/i64.asm src/vint.asm
 	$(call MKDIR,$(@D))
 	fasmg src/bigintce.asm bin/BIGINTCE.8xv
 
