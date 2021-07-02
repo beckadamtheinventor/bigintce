@@ -333,6 +333,7 @@ vint_tohex:
 	ld c,(hl)
 	inc hl
 	ld a,c
+	or a,a
 	jq nz,u64_tohex.entry
 	ld b,1 ;c is zero, setting b to 1 means bc = 256
 	jq u64_tohex.entry

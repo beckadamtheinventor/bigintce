@@ -37,10 +37,8 @@ int main(void){
 	vint_tohex(sbuf, vint_add(b, a));
 	sprintf((void*)0xFB0000,"0x123456789ABCDEF0 + 0x42069 = 0x%s\n", sbuf);
 	vint_itov(b, 0x42069);
-	vint_tohex(sbuf, vint_mul(a, b, r));
-	sprintf((void*)0xFB0000,"0x123456789ABCDEF0 * 0x42069 = 0x%s\n", sbuf);
-	vint_tohex(sbuf, vint_mul(a, b, r2));
-	sprintf((void*)0xFB0000,"0x123456789ABCDEF0 * 0x42069 = 0x%s\n", sbuf);
+	vint_tohex(sbuf, vint_sub(a, b));
+	sprintf((void*)0xFB0000,"0x123456789ABCDEF0 - 0x42069 = 0x%s\n", sbuf);
 
 	return 0;
 }
