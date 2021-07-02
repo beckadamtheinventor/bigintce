@@ -78,19 +78,19 @@ Add a 24 bit signed integer B to a 64-bit signed integer A.
 
 `ce_int64_t *i64_addi(ce_int64_t *A, int B);`
 
-/* Subtract a 24 bit signed integer B from a 64-bit signed integer A. */
+Subtract a 24 bit signed integer B from a 64-bit signed integer A.
 
 `ce_int64_t *i64_subi(ce_int64_t *A, int B);`
 
-/* Convert a 24 bit signed integer B to a 64-bit signed integer A. */
+Convert a 24 bit signed integer B to a 64-bit signed integer A.
 
 `ce_int64_t *i64_ito64(ce_int64_t *A, int B);`
 
-/* Compare two signed 64-bit integers A and B. Currently synonomous with u64_cmp. */
+Compare two signed 64-bit integers A and B. Currently synonomous with u64_cmp.
 
 `uint8_t i64_cmp(ce_int64_t *A, ce_int64_t *B);`
 
-/* Unary negate 64 bit signed integer A, returning A = ~A. */
+Unary negate 64 bit signed integer A, returning A = ~A.
 
 `ce_int64_t *i64_neg(ce_int64_t *A);`
 
