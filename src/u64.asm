@@ -1,8 +1,10 @@
+
 ;------------------------------------------------
-;ce_uint64_t *u64_alloc(void* (*_alloc)(size_t))
+;ce_uint64_t *u64_alloc(void* (*_alloc)(size_t));
 u64_alloc:
-	pop bc,hl
-	push hl,bc
+	pop bc
+	ex (sp),hl
+	push bc
 	ld bc,8
 	push bc
 	call _helper_jphl
