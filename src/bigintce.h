@@ -14,7 +14,7 @@ typedef struct __vint_t__ {
 #define varint_t vint_t
 
 /**
- * 64-bit signed/unsigned arithmetic routines
+ * 64-bit unsigned arithmetic routines
  **/
 
 /* Allocate a 64-bit integer */
@@ -69,8 +69,33 @@ ce_uint64_t *u64_powmod(ce_uint64_t *C, ce_uint64_t *E, ce_uint64_t *M);
 /* Convert a 64-bit integer to a hex string. buf must be allocated at least 17 bytes. */
 char *u64_tohex(char *buf, ce_uint64_t *A);
 
+
 /**
- * variable-length integer arithmetic routines (TBA, NOT YET IMPLEMENTED)
+ * 64-bit signed arithmetic routines
+ **/
+
+
+/* Add a 24 bit signed integer B to a 64-bit signed integer A. */
+ce_int64_t *i64_addi(ce_int64_t *A, int B);
+
+/* Subtract a 24 bit signed integer B from a 64-bit signed integer A. */
+ce_int64_t *i64_subi(ce_int64_t *A, int B);
+
+/* Convert a 24 bit signed integer B to a 64-bit signed integer A. */
+ce_int64_t *i64_ito64(ce_int64_t *A, int B);
+
+/* Compare two signed 64-bit integers A and B. Currently synonomous with u64_cmp. */
+uint8_t i64_cmp(ce_int64_t *A, ce_int64_t *B);
+
+/* Unary negate 64 bit signed integer A, returning A = ~A. */
+ce_int64_t *i64_neg(ce_int64_t *A);
+
+/* Convert a 64 bit signed integer A to a hexadecimal string buf. buf must be allocated at least 18 bytes to account for
+ * negative integer inputs outputting an extra character '-' prepending the output. */
+char *i64_tohex(char *buf, ce_int64_t *A);
+
+/**
+ * variable-length integer arithmetic routines (NOT FULLY IMPLEMENTED)
  **/
 
 /* allocate a variable-length integer. Size in *bytes*, not bits.

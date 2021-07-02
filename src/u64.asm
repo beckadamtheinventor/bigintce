@@ -155,7 +155,7 @@ u64_ito64:
 ;ce_uint64_t *u64_mul(ce_uint64_t *A, ce_uint64_t *B);
 ;output A = A * B
 u64_mul:
-	ld hl,-23
+	ld hl,-26
 	call ti._frameset
 	push iy
 	lea hl,ix-17
@@ -459,6 +459,7 @@ u64_tohex:
 	pop bc,de
 	ex (sp),hl
 	push de,bc
+.entry64:
 	ld bc,8
 .entry:
 	add hl,bc
@@ -495,10 +496,6 @@ u64_tohex:
 ; ce_uint64_t *u64_powmod(ce_uint64_t *C, ce_uint64_t *E, ce_uint64_t *M);
 ; return C = (C pow E) % M
 u64_powmod:
-	scf
-	sbc hl,hl
-	ld (hl),2
-
 	ld hl,-16
 	call ti._frameset
 	ld hl,(ix+12)
@@ -556,6 +553,8 @@ u64_powmod:
 	pea ix-8
 	call u64_div ;temp = R % M
 	pop de,bc,hl
+	lea hl,ix-16
+	ld de,(ix+12)
 	ld bc,8
 	ldir ;R = temp
 .no_mul_r_b:
@@ -570,7 +569,9 @@ u64_powmod:
 	ld bc,(ix+12)
 	push bc,hl
 	call u64_div ;temp = C % M
-	pop de,bc,hl
+	pop bc,bc,bc
+	lea hl,ix-16
+	ld de,(ix+6)
 	ld bc,8
 	ldir ;C = temp
 	jq .outer_loop
