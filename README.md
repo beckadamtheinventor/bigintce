@@ -67,11 +67,6 @@ Copy a 64-bit integer from src to dest. Returns pointer to dest.
 
 `ce_uint64_t *u64_copy(ce_uint64_t *dest, ce_uint64_t *src);`
 
-Raise C to E, returning remainder mod M. C = (C pow E) % M. 
-uses Right-to-Left binary fast modular exponentation.
-
-`ce_uint64_t *u64_powmod(ce_uint64_t *C, ce_uint64_t *E, ce_uint64_t *M);`
-
 Convert a 64-bit integer to a hex string. buf must be allocated at least 17 bytes.
 
 `char *u64_tohex(char *buf, ce_uint64_t *A);`
