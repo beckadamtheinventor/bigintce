@@ -159,9 +159,9 @@ u64_ito64:
 u64_mul:
 	ld hl,-26
 	call ti._frameset
-	push iy
+	ld (ix-26),iy
 	lea hl,ix-17
-	ld b,16
+	ld b,17
 	xor a,a
 .zeroloop:
 	ld (hl),a
@@ -215,7 +215,7 @@ u64_mul:
 	push de
 	ldir
 	pop hl
-	pop iy
+	ld iy,(ix-26)
 	ld sp,ix
 	pop ix
 	ret
@@ -428,7 +428,7 @@ u64_cmp:
 	ex hl,de
 	add hl,bc
 	ex hl,de
-	ld b,8
+	ld b,c
 .loop:
 	dec hl
 	dec de
@@ -523,14 +523,8 @@ u64_powmod:
 	ld (hl),a
 	djnz .zero_r_loop
 
-	pea ix-16 ;temp
-	ld hl,(ix+12) ;M
-	ld de,(ix+6) ;C
-	push hl,de
-	call u64_div ;temp = C % M
-	pop de,bc,hl
-	ld bc,8
-	ldir ;C = temp
+	ld hl,(ix+6)
+	call .mod_m ;C = C % M
 
 .outer_loop:
 	ld hl,(ix+9)
@@ -547,18 +541,10 @@ u64_powmod:
 	ld hl,(ix+6)
 	push hl
 	pea ix-8
-	call u64_mul ;R = R*C
+	call u64_mul ; R = R * C
 	pop bc,bc
-	pea ix-16
-	ld bc,(ix+12)
-	push bc
-	pea ix-8
-	call u64_div ;temp = R % M
-	pop de,bc,hl
-	lea hl,ix-16
-	ld de,(ix+12)
-	ld bc,8
-	ldir ;R = temp
+	lea hl,ix-8
+	call .mod_m ; R = R % M
 .no_mul_r_b:
 	ld hl,(ix+9) ;E = E >> 1
 	ld c,1
@@ -566,16 +552,8 @@ u64_powmod:
 	ld hl,(ix+6)
 	push hl,hl
 	call u64_mul ;C = C * C
-	pop bc,bc
-	pea ix-16
-	ld bc,(ix+12)
-	push bc,hl
-	call u64_div ;temp = C % M
-	pop bc,bc,bc
-	lea hl,ix-16
-	ld de,(ix+6)
-	ld bc,8
-	ldir ;C = temp
+	pop bc,hl
+	call .mod_m ;C = C % M
 	jq .outer_loop
 .return_R:
 	lea hl,ix-8
@@ -604,3 +582,13 @@ u64_powmod:
 	pop ix
 	ret
 
+.mod_m:
+	ld bc,(ix+12)
+	push hl
+	pea ix-16
+	push bc,hl
+	call u64_div
+	pop bc,bc,hl,de
+	ld bc,8
+	ldir
+	ret

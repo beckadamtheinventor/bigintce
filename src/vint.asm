@@ -256,12 +256,6 @@ vint_shr:
 	ret
 
 ;------------------------------------------------
-; vint_t *vint_mul(vint_t *A, vint_t *B, vint_t *R);
-; return R = A * B
-vint_mul:
-	ret
-
-;------------------------------------------------
 ; vint_t *vint_itov(vint_t *A, unsigned int B);
 ; returns pointer to A
 vint_itov:
@@ -350,4 +344,116 @@ vint_powmod:
 ; vint_t *vint_div(vint_t *A, vint_t *B, vint_t *R);
 ; return A = A / B, R = A % B
 vint_div:
+	ret
+
+;-----------------------------------
+;  Multiplication Algorithm used:
+;  R = (u128)0, I = 0
+;  while I < 8:
+;    J = 0, C = 0
+;    while J < 8:
+;      D = R[I+J] + C + A[I]*B[J]
+;      C = D >> 8
+;      D &= 0xFF
+;      R[I+J] = D
+;    R[I+8] = C
+;-----------------------------------
+;vint_t *vint_mul(vint_t *A, vint_t *B, vint_t *C);
+;output C = A * B
+vint_mul:
+	ld hl,-14
+	call ti._frameset
+	ld (ix-9),iy
+	ld hl,(ix+12)
+	ld b,(hl)
+	ld (ix-11),b
+	xor a,a
+.zeroloop:
+	inc hl
+	ld (hl),a
+	djnz .zeroloop
+	ld hl,(ix+9)
+	ld a,(hl)
+	ld (ix-1),a
+	ld hl,(ix+6)
+	ld (ix-6),hl
+	ld a,(hl)
+	ld (ix-10),a
+	ld iy,(ix+12)
+	lea hl,iy+1
+	ld bc,0
+	ld c,a
+	or a,a
+	jq nz,.outputunder256b
+	inc b
+.outputunder256b:
+	add hl,bc
+	ld (ix-14),hl
+	ld iy,(ix+12)
+	inc iy
+.outer_loop:
+	ld a,(ix-10)
+	ld (ix-2),a
+	or a,a
+	sbc hl,hl
+	push hl
+	pop de
+	ld bc,(ix+6)
+	ld a,(bc)
+	inc bc
+	ld (ix+6),bc
+	ld (ix-3),a
+.inner_loop:
+	ld h,0
+	ld l,(iy)
+	inc iy
+	add hl,de
+	ld bc,(ix+9)
+	ld a,(bc)
+	inc bc
+	ld (ix+9),bc
+	ld c,a
+	ld b,(ix-3)
+	mlt bc
+	add hl,bc
+	ld e,h
+	call .checkbounds
+	jq z,.dontload
+	ld (iy),l
+.dontload:
+	inc iy
+	dec (ix-2)
+	jq nz,.inner_loop
+	call .checkbounds
+	jq z,.dontloadcarry
+	ld (iy),e
+.dontloadcarry:
+	ld hl,(ix+12)
+	ld bc,0
+	ld c,(hl)
+	dec c
+	lea hl,iy
+	or a,a
+	sbc hl,bc
+	push hl
+	pop iy
+	ld hl,(ix+9)
+	ld bc,-8
+	add hl,bc
+	ld (ix+9),hl
+	dec (ix-1)
+	jq nz,.outer_loop
+	ld hl,(ix+12)
+	ld iy,(ix-9)
+	ld sp,ix
+	pop ix
+	ret
+
+.checkbounds:
+	push hl
+	lea hl,iy
+	ld bc,(ix-14)
+	or a,a
+	sbc hl,bc
+	pop hl
 	ret
